@@ -5,6 +5,7 @@ TITLE_DIR := $(SD_ROOT)/atmosphere/contents/$(TITLE_ID)
 ENABLE_SSL_MITM ?= 1
 DECLARE_SSL_MITM ?= 0
 ENABLE_SSL_SYSTEM_MITM ?= 0
+ENABLE_BOOT2 ?= 0
 export ENABLE_SSL_MITM
 
 export NETWORK_MITM_GIT_BRANCH   := $(shell git symbolic-ref --short HEAD)
@@ -29,7 +30,12 @@ build:
 pack: build
 	@mkdir -p $(TITLE_DIR)/flags
 	@cp network_mitm/out/nintendo_nx_arm64_armv8a/release/network_mitm.nsp $(TITLE_DIR)/exefs.nsp
+ifeq ($(ENABLE_BOOT2),1)
 	@touch $(TITLE_DIR)/flags/boot2.flag
+else
+	@rm -f $(TITLE_DIR)/flags/boot2.flag
+endif
+	@printf '{\n\t"name"  : "network_mitm",\n\t"tid"   : "%s",\n\t"requires_reboot": false\n}\n' "$(TITLE_ID)" > $(TITLE_DIR)/toolbox.json
 	@rm -f $(TITLE_DIR)/mitm.lst
 	@touch $(TITLE_DIR)/mitm.lst
 ifeq ($(DECLARE_SSL_MITM),1)
