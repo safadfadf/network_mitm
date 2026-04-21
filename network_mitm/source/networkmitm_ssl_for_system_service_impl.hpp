@@ -39,7 +39,12 @@ namespace ams::ssl::sf::impl {
             SslServiceForSystemImpl(std::shared_ptr<::Service> &&s, const sm::MitmProcessInfo &c, bool should_dump_traffic, PcapLinkType link_type, Span<uint8_t> ca_certificate_public_key_der) : MitmServiceImplBase(std::move(s), c), m_should_dump_traffic(should_dump_traffic), m_link_type(link_type), m_ca_certificate_public_key_der(ca_certificate_public_key_der) { /* ... */ }
 
             static bool ShouldMitm(const ams::sm::MitmProcessInfo &client_info) {
-                AMS_LOG("ShouldMitm SYSTEM pid: %lx tid: %lx\n", (u64)client_info.process_id, (u64)client_info.program_id);
+                AMS_LOG("ShouldMitm SSL SYSTEM pid=%lx tid=%lx am=%s system=%s -> %s\n",
+                        static_cast<u64>(client_info.process_id),
+                        static_cast<u64>(client_info.program_id),
+                        BoolString(IsAmProgramId(client_info.program_id)),
+                        BoolString(g_should_mitm_system),
+                        BoolString(g_should_mitm_system));
 
                 return g_should_mitm_system;
             }

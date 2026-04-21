@@ -6,7 +6,7 @@ CURRENT_DIRECTORY := $(abspath $(dir $(THIS_MAKEFILE)))
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../Atmosphere-libs/config/templates/stratosphere.mk
 
 export GIT_BRANCH   := $(shell git symbolic-ref --short HEAD)
-ENABLE_SSL_MITM ?= 0
+ENABLE_SSL_MITM ?= 1
 
 ifeq ($(strip $(shell git status --porcelain 2> /dev/null)),)
 export GIT_REVISION := $(GIT_BRANCH)-$(shell git rev-parse --short HEAD)

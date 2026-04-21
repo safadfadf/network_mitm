@@ -287,13 +287,19 @@ ServerManager g_server_manager_for_user;
 ServerManager g_server_manager_for_system;
 
 Result ServerManager::OnNeedsToAccept(int port_index, Server *server) {
-    AMS_LOG("OnNeedsToAccept\n");
+    AMS_LOG("OnNeedsToAccept port=%d\n", port_index);
 
     /* Acknowledge the mitm session. */
     std::shared_ptr<::Service> forward_service;
     sm::MitmProcessInfo client_info;
+    AMS_LOG("AcknowledgeMitmSession begin port=%d\n", port_index);
     server->AcknowledgeMitmSession(std::addressof(forward_service),
                                    std::addressof(client_info));
+    AMS_LOG("AcknowledgeMitmSession done port=%d pid=%lx tid=%lx am=%s fwd=%p\n",
+            port_index, static_cast<u64>(client_info.process_id),
+            static_cast<u64>(client_info.program_id),
+            BoolString(IsAmProgramId(client_info.program_id)),
+            forward_service.get());
 
     switch (port_index) {
     case PortIndex_SslMitm:
@@ -500,6 +506,14 @@ void Main() {
         should_register_ssl_mitm && hos::GetVersion() >= hos::Version_15_0_0 &&
         should_mitm_system;
     const bool should_disable_ssl_verification = ShouldDisableSslVerification();
+    AMS_LOG("Config enable_ssl_mitm=%s dump_ssl=%s mitm_all=%s mitm_system=%s "
+            "register_system=%s disable_verify=%s hos=%u\n",
+            BoolString(should_register_ssl_mitm),
+            BoolString(should_dump_ssl_traffic), BoolString(should_mitm_all),
+            BoolString(should_mitm_system),
+            BoolString(should_register_system_mitm),
+            BoolString(should_disable_ssl_verification),
+            static_cast<u32>(hos::GetVersion()));
     Initialize(should_dump_ssl_traffic, should_mitm_all, should_mitm_system,
                should_disable_ssl_verification);
 
@@ -525,14 +539,19 @@ void Main() {
     }
 
     /* Create mitm servers. */
-    R_ABORT_UNLESS(
-        (g_server_manager_for_user.RegisterMitmServer<SslServiceImpl>(
-            PortIndex_SslMitm, MitmSslServiceName)));
+    AMS_LOG("RegisterMitmServer SSL begin\n");
+    Result rc = g_server_manager_for_user.RegisterMitmServer<SslServiceImpl>(
+        PortIndex_SslMitm, MitmSslServiceName);
+    LogResult("RegisterMitmServer SSL", rc);
+    R_ABORT_UNLESS(rc);
 
     if (should_register_system_mitm) {
-        R_ABORT_UNLESS(
-            (g_server_manager_for_system.RegisterMitmServer<SslServiceForSystemImpl>(
-                PortIndex_SslSystemMitm, MitmSslSystemServiceName)));
+        AMS_LOG("RegisterMitmServer SSL SYSTEM begin\n");
+        rc = g_server_manager_for_system
+                 .RegisterMitmServer<SslServiceForSystemImpl>(
+                     PortIndex_SslSystemMitm, MitmSslSystemServiceName);
+        LogResult("RegisterMitmServer SSL SYSTEM", rc);
+        R_ABORT_UNLESS(rc);
     }
 
     /* Loop forever, servicing our services. */

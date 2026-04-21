@@ -22,6 +22,21 @@ namespace ams::ssl::sf::impl {
     extern bool g_should_mitm_system;
     extern bool g_should_disable_ssl_verification;
 
+    constexpr u64 AmProgramId = 0x0100000000000023;
+
+    inline const char *BoolString(bool value) {
+        return value ? "true" : "false";
+    }
+
+    inline bool IsAmProgramId(ncm::ProgramId program_id) {
+        return static_cast<u64>(program_id) == AmProgramId;
+    }
+
+    inline void LogResult(const char *label, Result result) {
+        AMS_LOG("%s rc=0x%08x module=%u desc=%u\n", label, result.GetValue(),
+                result.GetModule(), result.GetDescription());
+    }
+
     bool ConvertPemToDer(Span<const uint8_t> pem_cert, Span<uint8_t> &der_cert, size_t &der_cert_size);
 
     enum class TrustedCertStatus : u32 {

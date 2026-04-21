@@ -20,25 +20,40 @@
 namespace ams::ssl::sf::impl {
 Result SslContextImpl::SetOption(const ams::ssl::sf::OptionType &option,
                                  u32 value) {
-    R_TRY(sslContextSetOption_sfMitm(m_forward_service.get(),
-                                     static_cast<u32>(option), value));
+    AMS_LOG("SSL Context SetOption tid=%lx option=%u value=%u\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(option), value);
+    Result rc = sslContextSetOption_sfMitm(m_forward_service.get(),
+                                           static_cast<u32>(option), value);
+    LogResult("sslContextSetOption_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslContextImpl::GetOption(const ams::ssl::sf::OptionType &option,
                                  ams::sf::Out<u32> value) {
-    R_TRY(sslContextGetOption_sfMitm(
-        m_forward_service.get(), static_cast<u32>(option), value.GetPointer()));
+    AMS_LOG("SSL Context GetOption tid=%lx option=%u\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(option));
+    Result rc = sslContextGetOption_sfMitm(
+        m_forward_service.get(), static_cast<u32>(option), value.GetPointer());
+    LogResult("sslContextGetOption_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslContextImpl::CreateConnection(
     ams::sf::Out<ams::sf::SharedPointer<ams::ssl::sf::ISslConnection>> out) {
+    AMS_LOG("SSL Context CreateConnection tid=%lx dump=%s\n",
+            static_cast<u64>(m_client_info.program_id),
+            BoolString(m_should_dump_traffic));
     Service out_tmp;
-    R_TRY(sslContextCreateConnection_sfMitm(m_forward_service.get(),
-                                            std::addressof(out_tmp)));
+    Result rc = sslContextCreateConnection_sfMitm(m_forward_service.get(),
+                                                  std::addressof(out_tmp));
+    LogResult("sslContextCreateConnection_sfMitm", rc);
+    R_TRY(rc);
 
     PcapFileWriter *writter = nullptr;
 
@@ -101,8 +116,10 @@ Result SslContextImpl::CreateConnection(
 }
 
 Result SslContextImpl::GetConnectionCount(ams::sf::Out<u32> count) {
-    R_TRY(sslContextGetConnectionCount_sfMitm(m_forward_service.get(),
-                                              count.GetPointer()));
+    Result rc = sslContextGetConnectionCount_sfMitm(m_forward_service.get(),
+                                                    count.GetPointer());
+    LogResult("sslContextGetConnectionCount_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -110,10 +127,15 @@ Result SslContextImpl::GetConnectionCount(ams::sf::Out<u32> count) {
 Result SslContextImpl::ImportServerPki(
     const ams::ssl::sf::CertificateFormat &certificateFormat,
     const ams::sf::InBuffer &certificate, ams::sf::Out<u64> certificate_id) {
-    R_TRY(sslContextImportServerPki_sfMitm(
+    AMS_LOG("SSL Context ImportServerPki tid=%lx format=%u size=%zu\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(certificateFormat), certificate.GetSize());
+    Result rc = sslContextImportServerPki_sfMitm(
         m_forward_service.get(), static_cast<u32>(certificateFormat),
         certificate.GetPointer(), certificate.GetSize(),
-        certificate_id.GetPointer()));
+        certificate_id.GetPointer());
+    LogResult("sslContextImportServerPki_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -121,10 +143,15 @@ Result SslContextImpl::ImportServerPki(
 Result SslContextImpl::ImportClientPki(const ams::sf::InBuffer &certificate,
                                        const ams::sf::InBuffer &ascii_password,
                                        ams::sf::Out<u64> certificate_id) {
-    R_TRY(sslContextImportClientPki_sfMitm(
+    AMS_LOG("SSL Context ImportClientPki tid=%lx cert_size=%zu pass_size=%zu\n",
+            static_cast<u64>(m_client_info.program_id), certificate.GetSize(),
+            ascii_password.GetSize());
+    Result rc = sslContextImportClientPki_sfMitm(
         m_forward_service.get(), certificate.GetPointer(),
         certificate.GetSize(), ascii_password.GetPointer(),
-        ascii_password.GetSize(), certificate_id.GetPointer()));
+        ascii_password.GetSize(), certificate_id.GetPointer());
+    LogResult("sslContextImportClientPki_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }

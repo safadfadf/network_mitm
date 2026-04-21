@@ -23,17 +23,27 @@ Result SslServiceImpl::CreateContext(
     const ams::ssl::sf::SslVersion &version,
     const ams::sf::ClientProcessId &client_pid,
     ams::sf::Out<ams::sf::SharedPointer<ams::ssl::sf::ISslContext>> out) {
+    AMS_LOG("SSL CreateContext tid=%lx version=%u client_pid=%lx dump=%s "
+            "disable_verify=%s\n",
+            static_cast<u64>(m_client_info.program_id), static_cast<u32>(version),
+            static_cast<u64>(client_pid.GetValue()),
+            BoolString(m_should_dump_traffic),
+            BoolString(g_should_disable_ssl_verification));
+
     // If we aren't mitm the traffic or disabling verifications, we don't want
     // to control the sub objects to reduce overhead.
     if (!m_should_dump_traffic && !g_should_disable_ssl_verification) {
+        AMS_LOG("SSL CreateContext forwarding to original session\n");
         return sm::mitm::ResultShouldForwardToSession();
     }
 
     Service out_tmp;
-    R_TRY(sslCreateContext_sfMitm(
+    Result rc = sslCreateContext_sfMitm(
         m_forward_service.get(), static_cast<u32>(version),
         static_cast<u64>(client_pid.GetValue()),
-        static_cast<u64>(client_pid.GetValue()), std::addressof(out_tmp)));
+        static_cast<u64>(client_pid.GetValue()), std::addressof(out_tmp));
+    LogResult("sslCreateContext_sfMitm", rc);
+    R_TRY(rc);
 
     const ams::sf::cmif::DomainObjectId target_object_id{
         serviceGetObjectId(std::addressof(out_tmp))};
@@ -50,13 +60,20 @@ Result SslServiceImpl::GetCertificates(
     const ams::sf::InArray<ams::ssl::sf::CaCertificateId> &ids,
     ams::sf::Out<u32> certificates_count,
     const ams::sf::OutBuffer &certificates) {
-    R_TRY(sslGetCertificates_sfMitm(
+    AMS_LOG("SSL GetCertificates tid=%lx ids=%zu out_size=%zu\n",
+            static_cast<u64>(m_client_info.program_id), ids.GetSize(),
+            certificates.GetSize());
+    Result rc = sslGetCertificates_sfMitm(
         m_forward_service.get(),
         reinterpret_cast<const u32 *>(ids.GetPointer()), ids.GetSize(),
         certificates_count.GetPointer(), certificates.GetPointer(),
-        certificates.GetSize()));
+        certificates.GetSize());
+    LogResult("sslGetCertificates_sfMitm", rc);
+    R_TRY(rc);
 
-    R_TRY(PatchCertificates(ids, certificates_count, certificates));
+    rc = PatchCertificates(ids, certificates_count, certificates);
+    LogResult("PatchCertificates", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -64,12 +81,18 @@ Result SslServiceImpl::GetCertificates(
 Result SslServiceImpl::GetCertificateBufSize(
     const ams::sf::InArray<ams::ssl::sf::CaCertificateId> &ids,
     ams::sf::Out<u32> buffer_size) {
-    R_TRY(sslGetCertificateBufSize_sfMitm(
+    AMS_LOG("SSL GetCertificateBufSize tid=%lx ids=%zu\n",
+            static_cast<u64>(m_client_info.program_id), ids.GetSize());
+    Result rc = sslGetCertificateBufSize_sfMitm(
         m_forward_service.get(),
         reinterpret_cast<const u32 *>(ids.GetPointer()), ids.GetSize(),
-        buffer_size.GetPointer()));
+        buffer_size.GetPointer());
+    LogResult("sslGetCertificateBufSize_sfMitm", rc);
+    R_TRY(rc);
 
-    R_TRY(PatchCertificateBufSize(ids, buffer_size));
+    rc = PatchCertificateBufSize(ids, buffer_size);
+    LogResult("PatchCertificateBufSize", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }

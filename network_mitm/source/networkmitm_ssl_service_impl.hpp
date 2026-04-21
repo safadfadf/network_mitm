@@ -37,12 +37,17 @@ namespace ams::ssl::sf::impl {
             SslServiceImpl(std::shared_ptr<::Service> &&s, const sm::MitmProcessInfo &c, bool should_dump_traffic, PcapLinkType link_type, Span<uint8_t> ca_certificate_public_key_der) : MitmServiceImplBase(std::move(s), c), m_should_dump_traffic(should_dump_traffic), m_link_type(link_type), m_ca_certificate_public_key_der(ca_certificate_public_key_der) { /* ... */ }
 
             static bool ShouldMitm(const ams::sm::MitmProcessInfo &client_info) {
-                // AMS_LOG("ShouldMitm pid: %lx tid: %lx\n", (u64)client_info.process_id, (u64)client_info.program_id);
+                const bool is_application = ncm::IsApplicationId(client_info.program_id);
+                const bool is_am = IsAmProgramId(client_info.program_id);
+                const bool should_mitm = g_should_mitm_all || is_application;
 
-                if (g_should_mitm_all)
-                    return true;
+                AMS_LOG("ShouldMitm SSL pid=%lx tid=%lx app=%s am=%s all=%s -> %s\n",
+                        static_cast<u64>(client_info.process_id),
+                        static_cast<u64>(client_info.program_id),
+                        BoolString(is_application), BoolString(is_am),
+                        BoolString(g_should_mitm_all), BoolString(should_mitm));
 
-                return ncm::IsApplicationId(client_info.program_id);
+                return should_mitm;
             }
 
             Result CreateContext(const ams::ssl::sf::SslVersion &version, const ams::sf::ClientProcessId &client_pid, ams::sf::Out<ams::sf::SharedPointer<ams::ssl::sf::ISslContext>> out);

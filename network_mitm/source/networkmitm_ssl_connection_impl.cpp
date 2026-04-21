@@ -22,30 +22,46 @@ namespace ams::ssl::sf::impl {
 Result
 SslConnectionImpl::SetSocketDescriptor(u32 input_socket_fd,
                                        ams::sf::Out<u32> output_socket_fd) {
-    R_TRY(sslConnectionSetSocketDescriptor_sfMitm(
-        m_forward_service.get(), input_socket_fd,
-        output_socket_fd.GetPointer()));
+    AMS_LOG("SSL Conn SetSocketDescriptor tid=%lx in_fd=%u\n",
+            static_cast<u64>(m_client_info.program_id), input_socket_fd);
+    Result rc = sslConnectionSetSocketDescriptor_sfMitm(
+        m_forward_service.get(), input_socket_fd, output_socket_fd.GetPointer());
+    LogResult("sslConnectionSetSocketDescriptor_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslConnectionImpl::SetHostName(const ams::sf::InBuffer &hostname) {
-    R_TRY(sslConnectionSetHostName_sfMitm(
-        m_forward_service.get(), hostname.GetPointer(), hostname.GetSize()));
+    AMS_LOG("SSL Conn SetHostName tid=%lx size=%zu\n",
+            static_cast<u64>(m_client_info.program_id), hostname.GetSize());
+    Result rc = sslConnectionSetHostName_sfMitm(
+        m_forward_service.get(), hostname.GetPointer(), hostname.GetSize());
+    LogResult("sslConnectionSetHostName_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslConnectionImpl::SetVerifyOptionReal(
     const ams::ssl::sf::VerifyOption &option) {
-    R_TRY(sslConnectionSetVerifyOption_sfMitm(m_forward_service.get(),
-                                              static_cast<u32>(option)));
+    AMS_LOG("SSL Conn SetVerifyOptionReal tid=%lx option=%u\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(option));
+    Result rc = sslConnectionSetVerifyOption_sfMitm(m_forward_service.get(),
+                                                    static_cast<u32>(option));
+    LogResult("sslConnectionSetVerifyOption_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result
 SslConnectionImpl::SetVerifyOption(const ams::ssl::sf::VerifyOption &option) {
+    AMS_LOG("SSL Conn SetVerifyOption tid=%lx option=%u disable_verify=%s\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(option),
+            BoolString(g_should_disable_ssl_verification));
     if (g_should_disable_ssl_verification) {
         m_requested_option = option;
         R_SUCCEED();
@@ -55,24 +71,32 @@ SslConnectionImpl::SetVerifyOption(const ams::ssl::sf::VerifyOption &option) {
 }
 
 Result SslConnectionImpl::SetIoMode(const ams::ssl::sf::IoMode &mode) {
-    R_TRY(sslConnectionSetIoMode_sfMitm(m_forward_service.get(),
-                                        static_cast<u32>(mode)));
+    Result rc = sslConnectionSetIoMode_sfMitm(m_forward_service.get(),
+                                              static_cast<u32>(mode));
+    LogResult("sslConnectionSetIoMode_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslConnectionImpl::GetSocketDescriptor(ams::sf::Out<u32> socket_fd) {
-    R_TRY(sslConnectionGetSocketDescriptor_sfMitm(m_forward_service.get(),
-                                                  socket_fd.GetPointer()));
+    Result rc = sslConnectionGetSocketDescriptor_sfMitm(m_forward_service.get(),
+                                                        socket_fd.GetPointer());
+    LogResult("sslConnectionGetSocketDescriptor_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslConnectionImpl::GetHostName(ams::sf::Out<u32> hostname_length,
                                       const ams::sf::OutBuffer &hostname) {
-    R_TRY(sslConnectionGetHostName_sfMitm(
+    AMS_LOG("SSL Conn GetHostName tid=%lx out_size=%zu\n",
+            static_cast<u64>(m_client_info.program_id), hostname.GetSize());
+    Result rc = sslConnectionGetHostName_sfMitm(
         m_forward_service.get(), hostname_length.GetPointer(),
-        hostname.GetPointer(), hostname.GetSize()));
+        hostname.GetPointer(), hostname.GetSize());
+    LogResult("sslConnectionGetHostName_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -80,8 +104,10 @@ Result SslConnectionImpl::GetHostName(ams::sf::Out<u32> hostname_length,
 Result SslConnectionImpl::GetVerifyOption(
     ams::sf::Out<ams::ssl::sf::VerifyOption> option) {
     ams::ssl::sf::VerifyOption returned_value;
-    R_TRY(sslConnectionGetVerifyOption_sfMitm(m_forward_service.get(),
-                                              (u32 *)&returned_value));
+    Result rc = sslConnectionGetVerifyOption_sfMitm(m_forward_service.get(),
+                                                    (u32 *)&returned_value);
+    LogResult("sslConnectionGetVerifyOption_sfMitm", rc);
+    R_TRY(rc);
 
     option.SetValue(g_should_disable_ssl_verification ? m_requested_option
                                                       : returned_value);
@@ -97,7 +123,11 @@ Result SslConnectionImpl::GetIoMode(ams::sf::Out<ams::ssl::sf::IoMode> mode) {
 }
 
 Result SslConnectionImpl::DoHandshake() {
-    R_TRY(sslConnectionDoHandshake_sfMitm(m_forward_service.get()));
+    AMS_LOG("SSL Conn DoHandshake tid=%lx\n",
+            static_cast<u64>(m_client_info.program_id));
+    Result rc = sslConnectionDoHandshake_sfMitm(m_forward_service.get());
+    LogResult("sslConnectionDoHandshake_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -105,19 +135,29 @@ Result SslConnectionImpl::DoHandshake() {
 Result SslConnectionImpl::DoHandshakeGetServerCert(
     ams::sf::Out<u32> buffer_size, ams::sf::Out<u32> certificates_count,
     const ams::sf::OutBuffer &server_cert_buffer) {
-    R_TRY(sslConnectionDoHandshakeGetServerCert_sfMitm(
+    AMS_LOG("SSL Conn DoHandshakeGetServerCert tid=%lx out_size=%zu\n",
+            static_cast<u64>(m_client_info.program_id),
+            server_cert_buffer.GetSize());
+    Result rc = sslConnectionDoHandshakeGetServerCert_sfMitm(
         m_forward_service.get(), buffer_size.GetPointer(),
         certificates_count.GetPointer(), server_cert_buffer.GetPointer(),
-        server_cert_buffer.GetSize()));
+        server_cert_buffer.GetSize());
+    LogResult("sslConnectionDoHandshakeGetServerCert_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslConnectionImpl::Read(ams::sf::Out<u32> read_count,
                                const ams::sf::OutBuffer &buffer) {
-    R_TRY(sslConnectionRead_sfMitm(m_forward_service.get(),
-                                   read_count.GetPointer(), buffer.GetPointer(),
-                                   buffer.GetSize()));
+    Result rc = sslConnectionRead_sfMitm(
+        m_forward_service.get(), read_count.GetPointer(), buffer.GetPointer(),
+        buffer.GetSize());
+    LogResult("sslConnectionRead_sfMitm", rc);
+    R_TRY(rc);
+    AMS_LOG("SSL Conn Read tid=%lx requested=%zu read=%u\n",
+            static_cast<u64>(m_client_info.program_id), buffer.GetSize(),
+            read_count.GetValue());
 
     if (m_writer != nullptr) {
         m_writer->Write(PcapDirection::Input, buffer.GetPointer(),
@@ -129,9 +169,14 @@ Result SslConnectionImpl::Read(ams::sf::Out<u32> read_count,
 
 Result SslConnectionImpl::Write(const ams::sf::InBuffer &buffer,
                                 ams::sf::Out<u32> write_count) {
-    R_TRY(sslConnectionWrite_sfMitm(m_forward_service.get(),
-                                    buffer.GetPointer(), buffer.GetSize(),
-                                    write_count.GetPointer()));
+    Result rc = sslConnectionWrite_sfMitm(
+        m_forward_service.get(), buffer.GetPointer(), buffer.GetSize(),
+        write_count.GetPointer());
+    LogResult("sslConnectionWrite_sfMitm", rc);
+    R_TRY(rc);
+    AMS_LOG("SSL Conn Write tid=%lx requested=%zu wrote=%u\n",
+            static_cast<u64>(m_client_info.program_id), buffer.GetSize(),
+            write_count.GetValue());
 
     if (m_writer != nullptr) {
         m_writer->Write(PcapDirection::Output, buffer.GetPointer(),
@@ -142,8 +187,10 @@ Result SslConnectionImpl::Write(const ams::sf::InBuffer &buffer,
 }
 
 Result SslConnectionImpl::Pending(ams::sf::Out<u32> pending_count) {
-    R_TRY(sslConnectionPending_sfMitm(m_forward_service.get(),
-                                      pending_count.GetPointer()));
+    Result rc = sslConnectionPending_sfMitm(m_forward_service.get(),
+                                            pending_count.GetPointer());
+    LogResult("sslConnectionPending_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -222,14 +269,23 @@ Result SslConnectionImpl::GetRenegotiationMode(
 Result
 SslConnectionImpl::SetOptionReal(bool value,
                                  const ams::ssl::sf::OptionType &option) {
-    R_TRY(sslConnectionSetOption_sfMitm(m_forward_service.get(), value,
-                                        static_cast<u32>(option)));
+    AMS_LOG("SSL Conn SetOptionReal tid=%lx option=%u value=%s\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(option), BoolString(value));
+    Result rc = sslConnectionSetOption_sfMitm(m_forward_service.get(), value,
+                                              static_cast<u32>(option));
+    LogResult("sslConnectionSetOption_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
 
 Result SslConnectionImpl::SetOption(bool value,
                                     const ams::ssl::sf::OptionType &option) {
+    AMS_LOG("SSL Conn SetOption tid=%lx option=%u value=%s disable_verify=%s\n",
+            static_cast<u64>(m_client_info.program_id),
+            static_cast<u32>(option), BoolString(value),
+            BoolString(g_should_disable_ssl_verification));
     if (g_should_disable_ssl_verification &&
         option == ams::ssl::sf::OptionType::SkipDefaultVerify) {
         m_requested_default_verify = value;
@@ -242,8 +298,10 @@ Result SslConnectionImpl::SetOption(bool value,
 
 Result SslConnectionImpl::GetOptionReal(const ams::ssl::sf::OptionType &value,
                                         ams::sf::Out<bool> option) {
-    R_TRY(sslConnectionGetOption_sfMitm(
-        m_forward_service.get(), static_cast<u32>(value), option.GetPointer()));
+    Result rc = sslConnectionGetOption_sfMitm(
+        m_forward_service.get(), static_cast<u32>(value), option.GetPointer());
+    LogResult("sslConnectionGetOption_sfMitm", rc);
+    R_TRY(rc);
 
     R_SUCCEED();
 }
@@ -251,8 +309,10 @@ Result SslConnectionImpl::GetOptionReal(const ams::ssl::sf::OptionType &value,
 Result SslConnectionImpl::GetOption(const ams::ssl::sf::OptionType &value,
                                     ams::sf::Out<bool> option) {
     bool returned_value;
-    R_TRY(sslConnectionGetOption_sfMitm(
-        m_forward_service.get(), static_cast<u32>(value), &returned_value));
+    Result rc = sslConnectionGetOption_sfMitm(
+        m_forward_service.get(), static_cast<u32>(value), &returned_value);
+    LogResult("sslConnectionGetOption_sfMitm", rc);
+    R_TRY(rc);
 
     if (g_should_disable_ssl_verification &&
         value == ams::ssl::sf::OptionType::SkipDefaultVerify) {
