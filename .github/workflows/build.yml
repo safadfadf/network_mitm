@@ -28,20 +28,6 @@ jobs:
           make install
           popd
 
-      - name: Patch Atmosphere-libs for current libnx
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("Atmosphere-libs/libstratosphere/include/stratosphere/svc/svc_stratosphere_shims.hpp")
-          text = path.read_text()
-          text = text.replace(
-              "reinterpret_cast<::DebugEventInfo *>(out_info.GetPointerUnsafe())",
-              "out_info.GetPointerUnsafe()",
-          )
-          path.write_text(text)
-          PY
-
       - name: Build
         run: make PREFIX="ccache aarch64-none-elf-"
 
