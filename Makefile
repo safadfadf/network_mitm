@@ -31,6 +31,7 @@ pack: build
 	@cp network_mitm/out/nintendo_nx_arm64_armv8a/release/network_mitm.nsp $(TITLE_DIR)/exefs.nsp
 	@touch $(TITLE_DIR)/flags/boot2.flag
 	@rm -f $(TITLE_DIR)/mitm.lst
+	@touch $(TITLE_DIR)/mitm.lst
 ifeq ($(DECLARE_SSL_MITM),1)
 	@echo "ssl" >> $(TITLE_DIR)/mitm.lst
 ifeq ($(ENABLE_SSL_SYSTEM_MITM),1)
