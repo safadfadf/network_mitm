@@ -105,6 +105,7 @@ void InitializeFileLogger() {
     R_ABORT_UNLESS(
         fs::OpenFile(std::addressof(g_logger_file), path, fs::OpenMode_All));
 
+    R_ABORT_UNLESS(fs::SetFileSize(g_logger_file, 0));
     g_logger_file_ofs = 0;
 
     diag::impl::ReplaceDefaultLogObserver(LogFileLogObserver);
@@ -187,6 +188,18 @@ bool ShouldSslMitm() {
     }
 
     return false;
+}
+
+bool ShouldRegisterSslMitm() {
+    u8 en = 0;
+    if (settings::fwdbg::GetSettingsItemValue(std::addressof(en), sizeof(en),
+                                              "network_mitm",
+                                              "enable_ssl_mitm") ==
+        sizeof(en)) {
+        return (en != 0);
+    }
+
+    return NETWORK_MITM_ENABLE_SSL_MITM_BY_DEFAULT != 0;
 }
 
 bool ShouldDumpSslTraffic() {
@@ -480,10 +493,12 @@ void Main() {
 
     AMS_LOG("network_mitm enabled\n");
     const bool should_dump_ssl_traffic = ShouldDumpSslTraffic();
+    const bool should_register_ssl_mitm = ShouldRegisterSslMitm();
     const bool should_mitm_all = ShouldMitmAll();
     const bool should_mitm_system = ShouldMitmSystem() || should_mitm_all;
     const bool should_register_system_mitm =
-        hos::GetVersion() >= hos::Version_15_0_0 && should_mitm_system;
+        should_register_ssl_mitm && hos::GetVersion() >= hos::Version_15_0_0 &&
+        should_mitm_system;
     const bool should_disable_ssl_verification = ShouldDisableSslVerification();
     Initialize(should_dump_ssl_traffic, should_mitm_all, should_mitm_system,
                should_disable_ssl_verification);
@@ -502,6 +517,11 @@ void Main() {
 
     if (!should_dump_ssl_traffic) {
         AMS_LOG("SSL service traffic dumping disabled\n");
+    }
+
+    if (!should_register_ssl_mitm) {
+        AMS_LOG("SSL mitm registration disabled\n");
+        return;
     }
 
     /* Create mitm servers. */

@@ -2,7 +2,9 @@ OUTDIR := out
 TITLE_ID := 4200000000000666
 SD_ROOT := $(OUTDIR)/sd
 TITLE_DIR := $(SD_ROOT)/atmosphere/contents/$(TITLE_ID)
+ENABLE_SSL_MITM ?= 0
 ENABLE_SSL_SYSTEM_MITM ?= 0
+export ENABLE_SSL_MITM
 
 export NETWORK_MITM_GIT_BRANCH   := $(shell git symbolic-ref --short HEAD)
 
@@ -28,9 +30,11 @@ pack: build
 	@cp network_mitm/out/nintendo_nx_arm64_armv8a/release/network_mitm.nsp $(TITLE_DIR)/exefs.nsp
 	@touch $(TITLE_DIR)/flags/boot2.flag
 	@rm -f $(TITLE_DIR)/mitm.lst
+ifeq ($(ENABLE_SSL_MITM),1)
 	@echo "ssl" >> $(TITLE_DIR)/mitm.lst
 ifeq ($(ENABLE_SSL_SYSTEM_MITM),1)
 	@echo "ssl:s" >> $(TITLE_DIR)/mitm.lst
+endif
 endif
 
 dist: pack
