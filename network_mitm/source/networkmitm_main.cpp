@@ -492,7 +492,7 @@ void Main() {
 
     if (hos::GetVersion() >= hos::Version_15_0_0) {
         R_ABORT_UNLESS(
-            (g_server_manager_for_system.RegisterMitmServer<SslServiceImpl>(
+            (g_server_manager_for_system.RegisterMitmServer<SslServiceForSystemImpl>(
                 PortIndex_SslSystemMitm, MitmSslSystemServiceName)));
     }
 
