@@ -19,6 +19,7 @@
 
 namespace ams::ssl::sf::impl {
     extern bool g_should_mitm_all;
+    extern bool g_should_mitm_system;
     extern bool g_should_disable_ssl_verification;
 
     bool ConvertPemToDer(Span<const uint8_t> pem_cert, Span<uint8_t> &der_cert, size_t &der_cert_size);
@@ -40,4 +41,3 @@ namespace ams::ssl::sf::impl {
     Result PatchCertificates(const ams::sf::InArray<ams::ssl::sf::CaCertificateId> &ids, ams::sf::Out<u32> certificates_count, const ams::sf::OutBuffer &certificates);
     Result PatchCertificateBufSize(const ams::sf::InArray<ams::ssl::sf::CaCertificateId> &ids, ams::sf::Out<u32> buffer_size);
 }
-

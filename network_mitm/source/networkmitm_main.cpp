@@ -211,6 +211,17 @@ bool ShouldMitmAll() {
     return false;
 }
 
+bool ShouldMitmSystem() {
+    u8 en = 0;
+    if (settings::fwdbg::GetSettingsItemValue(
+            std::addressof(en), sizeof(en), "network_mitm",
+            "enable_ssl_system") == sizeof(en)) {
+        return (en != 0);
+    }
+
+    return false;
+}
+
 bool ShouldDisableSslVerification() {
     u8 en = 0;
     if (settings::fwdbg::GetSettingsItemValue(
@@ -230,6 +241,7 @@ Span<uint8_t> g_ca_certificate_public_key_pem;
 Span<uint8_t> g_ca_certificate_public_key_der = Span<uint8_t>();
 bool g_should_dump_ssl_traffic;
 bool g_should_mitm_all;
+bool g_should_mitm_system;
 bool g_should_disable_ssl_verification;
 PcapLinkType g_link_type;
 
@@ -315,9 +327,7 @@ void LoopServerThreadForSystem(void *) {
     g_server_manager_for_system.LoopProcess();
 }
 
-void ProcessForServerOnAllThreads() {
-    bool has_system_manager = hos::GetVersion() >= hos::Version_15_0_0;
-
+void ProcessForServerOnAllThreads(bool has_system_manager) {
     /* Initialize threads. */
     if constexpr (NumExtraThreads > 0) {
         const s32 priority =
@@ -382,11 +392,13 @@ Result ReadFileToBuffer(const char *path, void *buffer, size_t buffer_size,
 }
 
 void Initialize(bool should_dump_ssl_traffic, bool should_mitm_all,
+                bool should_mitm_system,
                 bool should_disable_ssl_verification) {
     g_ca_certificate_public_key_pem = MakeSpan(
         g_ca_public_key_storage_pem, sizeof(g_ca_public_key_storage_pem));
     g_should_dump_ssl_traffic = should_dump_ssl_traffic;
     g_should_mitm_all = should_mitm_all;
+    g_should_mitm_system = should_mitm_system;
     g_should_disable_ssl_verification = should_disable_ssl_verification;
     g_link_type = PcapLinkType::User;
 
@@ -469,12 +481,19 @@ void Main() {
     AMS_LOG("network_mitm enabled\n");
     const bool should_dump_ssl_traffic = ShouldDumpSslTraffic();
     const bool should_mitm_all = ShouldMitmAll();
+    const bool should_mitm_system = ShouldMitmSystem() || should_mitm_all;
+    const bool should_register_system_mitm =
+        hos::GetVersion() >= hos::Version_15_0_0 && should_mitm_system;
     const bool should_disable_ssl_verification = ShouldDisableSslVerification();
-    Initialize(should_dump_ssl_traffic, should_mitm_all,
+    Initialize(should_dump_ssl_traffic, should_mitm_all, should_mitm_system,
                should_disable_ssl_verification);
 
     if (should_mitm_all) {
         AMS_LOG("MITM enabled on all users\n");
+    }
+
+    if (should_mitm_system) {
+        AMS_LOG("MITM enabled for system SSL service\n");
     }
 
     if (should_disable_ssl_verification) {
@@ -490,7 +509,7 @@ void Main() {
         (g_server_manager_for_user.RegisterMitmServer<SslServiceImpl>(
             PortIndex_SslMitm, MitmSslServiceName)));
 
-    if (hos::GetVersion() >= hos::Version_15_0_0) {
+    if (should_register_system_mitm) {
         R_ABORT_UNLESS(
             (g_server_manager_for_system.RegisterMitmServer<SslServiceForSystemImpl>(
                 PortIndex_SslSystemMitm, MitmSslSystemServiceName)));
@@ -498,7 +517,7 @@ void Main() {
 
     /* Loop forever, servicing our services. */
     AMS_LOG("Accepting requests.\n");
-    ProcessForServerOnAllThreads();
+    ProcessForServerOnAllThreads(should_register_system_mitm);
 }
 
 } // namespace ams

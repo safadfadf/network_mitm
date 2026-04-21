@@ -2,6 +2,7 @@ OUTDIR := out
 TITLE_ID := 4200000000000666
 SD_ROOT := $(OUTDIR)/sd
 TITLE_DIR := $(SD_ROOT)/atmosphere/contents/$(TITLE_ID)
+ENABLE_SSL_SYSTEM_MITM ?= 0
 
 export NETWORK_MITM_GIT_BRANCH   := $(shell git symbolic-ref --short HEAD)
 
@@ -28,7 +29,9 @@ pack: build
 	@touch $(TITLE_DIR)/flags/boot2.flag
 	@rm -f $(TITLE_DIR)/mitm.lst
 	@echo "ssl" >> $(TITLE_DIR)/mitm.lst
+ifeq ($(ENABLE_SSL_SYSTEM_MITM),1)
 	@echo "ssl:s" >> $(TITLE_DIR)/mitm.lst
+endif
 
 dist: pack
 	@cd $(SD_ROOT); zip -r ../network_mitm-$(NETWORK_MITM_VERSION).zip ./* > /dev/null; cd ../;

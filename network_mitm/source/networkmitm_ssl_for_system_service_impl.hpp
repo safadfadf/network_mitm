@@ -41,7 +41,7 @@ namespace ams::ssl::sf::impl {
             static bool ShouldMitm(const ams::sm::MitmProcessInfo &client_info) {
                 AMS_LOG("ShouldMitm SYSTEM pid: %lx tid: %lx\n", (u64)client_info.process_id, (u64)client_info.program_id);
 
-                return g_should_mitm_all;
+                return g_should_mitm_system;
             }
 
             Result CreateContext(const ams::ssl::sf::SslVersion &version, const ams::sf::ClientProcessId &client_pid, ams::sf::Out<ams::sf::SharedPointer<ams::ssl::sf::ISslContext>> out);
