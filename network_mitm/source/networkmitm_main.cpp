@@ -202,6 +202,17 @@ bool ShouldRegisterSslMitm() {
     return NETWORK_MITM_ENABLE_SSL_MITM_BY_DEFAULT != 0;
 }
 
+u32 GetSslMitmRegisterDelayMs() {
+    u32 delay_ms = 0;
+    if (settings::fwdbg::GetSettingsItemValue(
+            std::addressof(delay_ms), sizeof(delay_ms), "network_mitm",
+            "ssl_mitm_register_delay_ms") == sizeof(delay_ms)) {
+        return delay_ms;
+    }
+
+    return 15000;
+}
+
 bool ShouldDumpSslTraffic() {
     u8 en = 0;
     if (settings::fwdbg::GetSettingsItemValue(
@@ -500,15 +511,18 @@ void Main() {
     AMS_LOG("network_mitm enabled\n");
     const bool should_dump_ssl_traffic = ShouldDumpSslTraffic();
     const bool should_register_ssl_mitm = ShouldRegisterSslMitm();
+    const u32 ssl_mitm_register_delay_ms = GetSslMitmRegisterDelayMs();
     const bool should_mitm_all = ShouldMitmAll();
     const bool should_mitm_system = ShouldMitmSystem() || should_mitm_all;
     const bool should_register_system_mitm =
         should_register_ssl_mitm && hos::GetVersion() >= hos::Version_15_0_0 &&
         should_mitm_system;
     const bool should_disable_ssl_verification = ShouldDisableSslVerification();
-    AMS_LOG("Config enable_ssl_mitm=%s dump_ssl=%s mitm_all=%s mitm_system=%s "
-            "register_system=%s disable_verify=%s hos=%u\n",
+    AMS_LOG("Config enable_ssl_mitm=%s register_delay_ms=%u dump_ssl=%s "
+            "mitm_all=%s mitm_system=%s register_system=%s disable_verify=%s "
+            "hos=%u\n",
             BoolString(should_register_ssl_mitm),
+            ssl_mitm_register_delay_ms,
             BoolString(should_dump_ssl_traffic), BoolString(should_mitm_all),
             BoolString(should_mitm_system),
             BoolString(should_register_system_mitm),
@@ -536,6 +550,12 @@ void Main() {
     if (!should_register_ssl_mitm) {
         AMS_LOG("SSL mitm registration disabled\n");
         return;
+    }
+
+    if (ssl_mitm_register_delay_ms != 0) {
+        AMS_LOG("Delaying SSL mitm registration by %u ms\n",
+                ssl_mitm_register_delay_ms);
+        os::SleepThread(TimeSpan::FromMilliSeconds(ssl_mitm_register_delay_ms));
     }
 
     /* Create mitm servers. */
