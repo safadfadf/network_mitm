@@ -463,6 +463,10 @@ void Initialize(bool should_dump_ssl_traffic, bool should_mitm_all,
         if (R_SUCCEEDED(ReadFileToBuffer(
                 custom_cert_path, g_ca_certificate_public_key_pem.data(),
                 g_ca_certificate_public_key_pem.size_bytes(), out_size))) {
+            AMS_LOG("Custom CA public cert read ok path=%s pem_size=%zu "
+                    "storage_capacity=%zu\n",
+                    custom_cert_path, out_size,
+                    g_ca_certificate_public_key_pem.size_bytes());
             g_ca_certificate_public_key_pem =
                 MakeSpan(g_ca_public_key_storage_pem, out_size);
 
@@ -476,8 +480,9 @@ void Initialize(bool should_dump_ssl_traffic, bool should_mitm_all,
             } else {
                 g_ca_certificate_public_key_der =
                     MakeSpan(g_ca_public_key_storage_der, der_cert_size);
-                AMS_LOG("Custom CA public cert at %s was loaded\n",
-                        custom_cert_path);
+                AMS_LOG("Custom CA public cert at %s was loaded "
+                        "der_size=%zu\n",
+                        custom_cert_path, der_cert_size);
             }
         } else {
             AMS_LOG("Failed to load custom CA public cert at %s\n",
