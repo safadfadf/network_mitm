@@ -22,7 +22,7 @@ namespace ams::ssl::sf::impl {
 Result
 SslConnectionImpl::SetSocketDescriptor(u32 input_socket_fd,
                                        ams::sf::Out<u32> output_socket_fd) {
-    AMS_VLOG("SSL Conn SetSocketDescriptor tid=%lx in_fd=%u\n",
+    NETWORK_MITM_VLOG("SSL Conn SetSocketDescriptor tid=%lx in_fd=%u\n",
             static_cast<u64>(m_client_info.program_id), input_socket_fd);
     Result rc = sslConnectionSetSocketDescriptor_sfMitm(
         m_forward_service.get(), input_socket_fd, output_socket_fd.GetPointer());
@@ -33,7 +33,7 @@ SslConnectionImpl::SetSocketDescriptor(u32 input_socket_fd,
 }
 
 Result SslConnectionImpl::SetHostName(const ams::sf::InBuffer &hostname) {
-    AMS_VLOG("SSL Conn SetHostName tid=%lx size=%zu\n",
+    NETWORK_MITM_VLOG("SSL Conn SetHostName tid=%lx size=%zu\n",
             static_cast<u64>(m_client_info.program_id), hostname.GetSize());
     Result rc = sslConnectionSetHostName_sfMitm(
         m_forward_service.get(), hostname.GetPointer(), hostname.GetSize());
@@ -45,7 +45,7 @@ Result SslConnectionImpl::SetHostName(const ams::sf::InBuffer &hostname) {
 
 Result SslConnectionImpl::SetVerifyOptionReal(
     const ams::ssl::sf::VerifyOption &option) {
-    AMS_VLOG("SSL Conn SetVerifyOptionReal tid=%lx option=%u\n",
+    NETWORK_MITM_VLOG("SSL Conn SetVerifyOptionReal tid=%lx option=%u\n",
             static_cast<u64>(m_client_info.program_id),
             static_cast<u32>(option));
     Result rc = sslConnectionSetVerifyOption_sfMitm(m_forward_service.get(),
@@ -58,7 +58,7 @@ Result SslConnectionImpl::SetVerifyOptionReal(
 
 Result
 SslConnectionImpl::SetVerifyOption(const ams::ssl::sf::VerifyOption &option) {
-    AMS_VLOG("SSL Conn SetVerifyOption tid=%lx option=%u disable_verify=%s\n",
+    NETWORK_MITM_VLOG("SSL Conn SetVerifyOption tid=%lx option=%u disable_verify=%s\n",
             static_cast<u64>(m_client_info.program_id),
             static_cast<u32>(option),
             BoolString(g_should_disable_ssl_verification));
@@ -90,7 +90,7 @@ Result SslConnectionImpl::GetSocketDescriptor(ams::sf::Out<u32> socket_fd) {
 
 Result SslConnectionImpl::GetHostName(ams::sf::Out<u32> hostname_length,
                                       const ams::sf::OutBuffer &hostname) {
-    AMS_VLOG("SSL Conn GetHostName tid=%lx out_size=%zu\n",
+    NETWORK_MITM_VLOG("SSL Conn GetHostName tid=%lx out_size=%zu\n",
             static_cast<u64>(m_client_info.program_id), hostname.GetSize());
     Result rc = sslConnectionGetHostName_sfMitm(
         m_forward_service.get(), hostname_length.GetPointer(),
@@ -123,7 +123,7 @@ Result SslConnectionImpl::GetIoMode(ams::sf::Out<ams::ssl::sf::IoMode> mode) {
 }
 
 Result SslConnectionImpl::DoHandshake() {
-    AMS_VLOG("SSL Conn DoHandshake tid=%lx\n",
+    NETWORK_MITM_VLOG("SSL Conn DoHandshake tid=%lx\n",
             static_cast<u64>(m_client_info.program_id));
     Result rc = sslConnectionDoHandshake_sfMitm(m_forward_service.get());
     LogResult("sslConnectionDoHandshake_sfMitm", rc);
@@ -135,7 +135,7 @@ Result SslConnectionImpl::DoHandshake() {
 Result SslConnectionImpl::DoHandshakeGetServerCert(
     ams::sf::Out<u32> buffer_size, ams::sf::Out<u32> certificates_count,
     const ams::sf::OutBuffer &server_cert_buffer) {
-    AMS_VLOG("SSL Conn DoHandshakeGetServerCert tid=%lx out_size=%zu\n",
+    NETWORK_MITM_VLOG("SSL Conn DoHandshakeGetServerCert tid=%lx out_size=%zu\n",
             static_cast<u64>(m_client_info.program_id),
             server_cert_buffer.GetSize());
     Result rc = sslConnectionDoHandshakeGetServerCert_sfMitm(
@@ -155,7 +155,7 @@ Result SslConnectionImpl::Read(ams::sf::Out<u32> read_count,
         buffer.GetSize());
     LogResult("sslConnectionRead_sfMitm", rc);
     R_TRY(rc);
-    AMS_VLOG("SSL Conn Read tid=%lx requested=%zu read=%u\n",
+    NETWORK_MITM_VLOG("SSL Conn Read tid=%lx requested=%zu read=%u\n",
             static_cast<u64>(m_client_info.program_id), buffer.GetSize(),
             read_count.GetValue());
 
@@ -174,7 +174,7 @@ Result SslConnectionImpl::Write(const ams::sf::InBuffer &buffer,
         write_count.GetPointer());
     LogResult("sslConnectionWrite_sfMitm", rc);
     R_TRY(rc);
-    AMS_VLOG("SSL Conn Write tid=%lx requested=%zu wrote=%u\n",
+    NETWORK_MITM_VLOG("SSL Conn Write tid=%lx requested=%zu wrote=%u\n",
             static_cast<u64>(m_client_info.program_id), buffer.GetSize(),
             write_count.GetValue());
 
@@ -269,7 +269,7 @@ Result SslConnectionImpl::GetRenegotiationMode(
 Result
 SslConnectionImpl::SetOptionReal(bool value,
                                  const ams::ssl::sf::OptionType &option) {
-    AMS_VLOG("SSL Conn SetOptionReal tid=%lx option=%u value=%s\n",
+    NETWORK_MITM_VLOG("SSL Conn SetOptionReal tid=%lx option=%u value=%s\n",
             static_cast<u64>(m_client_info.program_id),
             static_cast<u32>(option), BoolString(value));
     Result rc = sslConnectionSetOption_sfMitm(m_forward_service.get(), value,
@@ -282,7 +282,7 @@ SslConnectionImpl::SetOptionReal(bool value,
 
 Result SslConnectionImpl::SetOption(bool value,
                                     const ams::ssl::sf::OptionType &option) {
-    AMS_VLOG("SSL Conn SetOption tid=%lx option=%u value=%s disable_verify=%s\n",
+    NETWORK_MITM_VLOG("SSL Conn SetOption tid=%lx option=%u value=%s disable_verify=%s\n",
             static_cast<u64>(m_client_info.program_id),
             static_cast<u32>(option), BoolString(value),
             BoolString(g_should_disable_ssl_verification));

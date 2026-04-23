@@ -23,9 +23,9 @@ namespace ams::ssl::sf::impl {
 #endif
 
 #if NETWORK_MITM_ENABLE_VERBOSE_LOGGING
-#define AMS_VLOG(...) AMS_LOG(__VA_ARGS__)
+#define NETWORK_MITM_VLOG(...) AMS_LOG(__VA_ARGS__)
 #else
-#define AMS_VLOG(...) ((void)0)
+#define NETWORK_MITM_VLOG(...) ((void)0)
 #endif
 
     extern bool g_should_mitm_all;

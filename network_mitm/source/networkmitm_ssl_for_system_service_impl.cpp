@@ -23,7 +23,7 @@ Result SslServiceForSystemImpl::CreateContext(
     const ams::ssl::sf::SslVersion &version,
     const ams::sf::ClientProcessId &client_pid,
     ams::sf::Out<ams::sf::SharedPointer<ams::ssl::sf::ISslContext>> out) {
-    AMS_VLOG("SSL SYSTEM CreateContext tid=%lx version=%u client_pid=%lx dump=%s "
+    NETWORK_MITM_VLOG("SSL SYSTEM CreateContext tid=%lx version=%u client_pid=%lx dump=%s "
             "disable_verify=%s\n",
             static_cast<u64>(m_client_info.program_id), static_cast<u32>(version),
             static_cast<u64>(client_pid.GetValue()),
@@ -33,7 +33,7 @@ Result SslServiceForSystemImpl::CreateContext(
     // If we aren't mitm the traffic or disabling verifications, we don't want
     // to control the sub objects to reduce overhead.
     if (!m_should_dump_traffic && !g_should_disable_ssl_verification) {
-        AMS_VLOG("SSL SYSTEM CreateContext forwarding to original session\n");
+        NETWORK_MITM_VLOG("SSL SYSTEM CreateContext forwarding to original session\n");
         return sm::mitm::ResultShouldForwardToSession();
     }
 
@@ -61,7 +61,7 @@ Result SslServiceForSystemImpl::GetCertificates(
     const ams::sf::InArray<ams::ssl::sf::CaCertificateId> &ids,
     ams::sf::Out<u32> certificates_count,
     const ams::sf::OutBuffer &certificates) {
-    AMS_VLOG("SSL SYSTEM GetCertificates tid=%lx ids=%zu out_size=%zu\n",
+    NETWORK_MITM_VLOG("SSL SYSTEM GetCertificates tid=%lx ids=%zu out_size=%zu\n",
             static_cast<u64>(m_client_info.program_id), ids.GetSize(),
             certificates.GetSize());
     Result rc = sslsGetCertificates_sfMitm(
@@ -82,7 +82,7 @@ Result SslServiceForSystemImpl::GetCertificates(
 Result SslServiceForSystemImpl::GetCertificateBufSize(
     const ams::sf::InArray<ams::ssl::sf::CaCertificateId> &ids,
     ams::sf::Out<u32> buffer_size) {
-    AMS_VLOG("SSL SYSTEM GetCertificateBufSize tid=%lx ids=%zu\n",
+    NETWORK_MITM_VLOG("SSL SYSTEM GetCertificateBufSize tid=%lx ids=%zu\n",
             static_cast<u64>(m_client_info.program_id), ids.GetSize());
     Result rc = sslsGetCertificateBufSize_sfMitm(
         m_forward_service.get(),
@@ -103,7 +103,7 @@ Result SslServiceForSystemImpl::CreateContextForSystem(
     const ams::sf::ClientProcessId &client_pid,
     ams::sf::Out<ams::sf::SharedPointer<ams::ssl::sf::ISslContextForSystem>>
         out) {
-    AMS_VLOG("SSL SYSTEM CreateContextForSystem tid=%lx version=%u client_pid=%lx "
+    NETWORK_MITM_VLOG("SSL SYSTEM CreateContextForSystem tid=%lx version=%u client_pid=%lx "
             "dump=%s disable_verify=%s\n",
             static_cast<u64>(m_client_info.program_id), static_cast<u32>(version),
             static_cast<u64>(client_pid.GetValue()),
@@ -113,7 +113,7 @@ Result SslServiceForSystemImpl::CreateContextForSystem(
     // If we aren't mitm the traffic or disabling verifications, we don't want
     // to control the sub objects to reduce overhead.
     if (!m_should_dump_traffic && !g_should_disable_ssl_verification) {
-        AMS_VLOG("SSL SYSTEM CreateContextForSystem forwarding to original session\n");
+        NETWORK_MITM_VLOG("SSL SYSTEM CreateContextForSystem forwarding to original session\n");
         return sm::mitm::ResultShouldForwardToSession();
     }
 
