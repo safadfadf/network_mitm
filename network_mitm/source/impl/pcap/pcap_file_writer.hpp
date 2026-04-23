@@ -48,6 +48,10 @@ namespace ams::ssl::mitm::pcap {
             PcapDirection m_last_direction;
             uint64_t m_last_packet_header_position;
             uint64_t m_last_packet_header_size;
+            bool m_has_last_packet_header;
+            PcapTimeVal m_last_packet_timestamp;
+            uint32_t m_last_packet_capture_length;
+            uint32_t m_last_packet_length;
 
             EthernetPeerInfo m_dst_peer_info;
             EthernetPeerInfo m_src_peer_info;

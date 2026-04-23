@@ -66,6 +66,8 @@ PcapFileWriter::PcapFileWriter(fs::FileHandle file_handle,
     : m_file_handle(file_handle), m_packet_lock(), m_link_type(link_type),
       m_file_position(0), m_last_direction(PcapDirection::Unspecified),
       m_last_packet_header_position(0), m_last_packet_header_size(0),
+      m_has_last_packet_header(false), m_last_packet_timestamp(0, 0),
+      m_last_packet_capture_length(0), m_last_packet_length(0),
       m_dst_peer_info(dst_peer_info), m_src_peer_info(src_peer_info) {
     m_src_seq = 0x100000;
     m_dst_seq = 0x900000;
@@ -172,6 +174,10 @@ void PcapFileWriter::WritePacket(const void *extra_header,
 
     if (should_use_new_packet_header) {
         m_last_packet_header_position = m_file_position;
+        m_last_packet_timestamp = timestamp;
+        m_last_packet_capture_length = capture_length;
+        m_last_packet_length = capture_length;
+        m_has_last_packet_header = true;
 
         WriteFile(&packet_header, sizeof(packet_header));
 
@@ -181,13 +187,14 @@ void PcapFileWriter::WritePacket(const void *extra_header,
 
         m_last_packet_header_size = 0;
     } else {
-        R_ABORT_UNLESS(fs::ReadFile(m_file_handle,
-                                    m_last_packet_header_position,
-                                    &packet_header, sizeof(packet_header)));
+        AMS_ASSERT(m_has_last_packet_header);
 
-        packet_header.ts = timestamp;
-        packet_header.capture_length += buffer_size;
-        packet_header.packet_length += buffer_size;
+        m_last_packet_timestamp = timestamp;
+        m_last_packet_capture_length += buffer_size;
+        m_last_packet_length += buffer_size;
+        packet_header.ts = m_last_packet_timestamp;
+        packet_header.capture_length = m_last_packet_capture_length;
+        packet_header.packet_length = m_last_packet_length;
 
         WriteFileAtPosition(m_last_packet_header_position, &packet_header,
                             sizeof(packet_header));

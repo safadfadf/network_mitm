@@ -18,6 +18,16 @@
 #include "networkmitm_ssl_types.hpp"
 
 namespace ams::ssl::sf::impl {
+#ifndef NETWORK_MITM_ENABLE_VERBOSE_LOGGING
+#define NETWORK_MITM_ENABLE_VERBOSE_LOGGING 0
+#endif
+
+#if NETWORK_MITM_ENABLE_VERBOSE_LOGGING
+#define AMS_VLOG(...) AMS_LOG(__VA_ARGS__)
+#else
+#define AMS_VLOG(...) ((void)0)
+#endif
+
     extern bool g_should_mitm_all;
     extern bool g_should_mitm_system;
     extern bool g_should_disable_ssl_verification;
